@@ -9,7 +9,7 @@ CREATE TABLE users (
   email VARCHAR(255) NOT NULL UNIQUE,
   first_name VARCHAR(100) NOT NULL,
   last_name VARCHAR(100) NOT NULL,
-  role VARCHAR(50) NOT NULL CHECK (role IN ('Super Admin', 'Group Leader', 'Department Manager', 'Manager', 'Employee', 'Admin')),
+  role VARCHAR(50) NOT NULL CHECK (role IN ('SuperAdmin', 'GroupLeader', 'DepartmentManager', 'Manager', 'Employee', 'Admin')),
   password_hash VARCHAR(255) NOT NULL,
   manager_id UUID REFERENCES users(id),
   department_id UUID,  -- FK will be added after departments table is created

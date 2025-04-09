@@ -11,11 +11,11 @@ export const getUserById = async (id: string) => {
 };
 
 export const createUser = async (data: any) => {
-    const { email, first_name, last_name, role, password_hash, manager_id, department_id } = data;
+    const { email, firstName, lastName, role, password, manager_id, department_id } = data;
     const result = await pool.query(
         `INSERT INTO users (email, first_name, last_name, role, password_hash, manager_id, department_id)
      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [email, first_name, last_name, role, password_hash, manager_id, department_id]
+        [email, firstName, lastName, role, password, manager_id, department_id]
     );
     return result.rows[0];
 };
