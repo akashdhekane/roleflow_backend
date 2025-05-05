@@ -5,10 +5,71 @@ export const getAllTasks = async () => {
     return rows;
 };
 
-export const getTaskById = async (id: string) => {
-    const { rows } = await pool.query('SELECT * FROM tasks WHERE id = $1', [id]);
-    return rows[0];
+export const getVisibleTasksForUser = async (id: string) => {
+    const query = `
+      WITH cur_user AS (
+        SELECT 
+          u.id AS user_id,
+          u.role,
+          u.department_id,
+          CASE u.role
+            WHEN 'SuperAdmin' THEN 1
+            WHEN 'Admin' THEN 2
+            WHEN 'GroupLeader' THEN 3
+            WHEN 'DepartmentManager' THEN 4
+            WHEN 'Manager' THEN 5
+            WHEN 'TeamLead' THEN 6
+            WHEN 'Employee' THEN 7
+            WHEN 'Contractor' THEN 8
+            WHEN 'Guest' THEN 8
+            ELSE 100
+          END AS role_level
+        FROM users u
+        WHERE u.id = $1
+      ),
+      department_users AS (
+        SELECT u.id
+        FROM users u, cur_user cu
+        WHERE u.department_id = cu.department_id
+      ),
+      reportees AS (
+        SELECT u.id FROM users u WHERE u.manager_id = $1
+      ),
+      visible_tasks AS (
+        SELECT t.*
+        FROM tasks t, cur_user cu
+        WHERE
+          cu.role_level IN (1, 2) -- SuperAdmin and Admin see all
+  
+          OR (cu.role_level = 3 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM department_users)
+          ))
+  
+          OR (cu.role_level = 4 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM department_users)
+          ))
+  
+          OR (cu.role_level = 5 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM department_users)
+          ))
+  
+          OR (cu.role_level = 6 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM reportees)
+          ))
+  
+          OR (cu.role_level >= 7 AND t.assigned_to = cu.user_id)
+      )
+      SELECT * FROM visible_tasks;
+    `;
+
+    const { rows } = await pool.query(query, [id]);
+    return rows;
 };
+
 
 export const createTask = async (task: any) => {
     const {

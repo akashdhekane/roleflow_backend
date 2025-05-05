@@ -28,3 +28,9 @@ export const deleteTask = async (req: Request, res: Response) => {
     if (deleted) res.status(204).send();
     else res.status(404).json({ message: 'Task not found' });
 };
+
+export const getVisibleTasksForUser = async (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const tasks = await taskService.getVisibleTasksForUser(userId);
+    res.json(tasks);
+};
